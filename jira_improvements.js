@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Improvements Jira
 // @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      1.0
+// @version      1.0.0.1
 // @description  some improvements for Jira
 // @author       tuffo19
 // @match        https://tecla-it.atlassian.net/browse/*
