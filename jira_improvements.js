@@ -8,6 +8,8 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=atlassian.net
 // @grant        none
 // @require  	https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js
+// @downloadURL  https://raw.githubusercontent.com/tuffo19/tampermonkey_scripts/main/jira_improvements.js
+// @updateURL    https://raw.githubusercontent.com/tuffo19/tampermonkey_scripts/main/jira_improvements.js
 // @run-at      document-end
 // ==/UserScript==
 
