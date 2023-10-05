@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Improvements Jira
 // @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      1.0.0.2
+// @version      1.0.1
 // @description  some improvements for Jira
 // @author       tuffo19
 // @match        https://tecla-it.atlassian.net/browse/*
@@ -49,13 +49,14 @@ myFunctions.updateGUI = lutechJiraRappo;
 
     waitForElm('a[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]').then((elm) => {
     console.log("%c Title is arrived. adding Button for comments", 'font-size: 12px;color: red');
-   //console.log(elm.textContent);
-   $('[data-test-id="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]').append("<div style='margin-left:12px'><button onclick='javascript:myFunctions.updateGUI(); return false'>Copy ticket info</button></div>");
+  // console.log(elm.textContent);
+   $('div[data-testid="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]').append("<div style='margin-left:12px'><button onclick='javascript:myFunctions.updateGUI(); return false'>Copy ticket info</button></div>");
 });
 
     waitForElm("button[data-testid='issue.activity.common.component.load-more-button.loading-button']").then((elm) => {
      console.log("%c Button is arrived. Clicking on it to show more", 'font-size: 12px;color: red');
     //console.log(elm.textContent);
+
    $("button[data-testid='issue.activity.common.component.load-more-button.loading-button']").trigger("click")
 });
 
