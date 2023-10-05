@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Improvements Jira
 // @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      1.0.0.1
+// @version      1.0.0.2
 // @description  some improvements for Jira
 // @author       tuffo19
 // @match        https://tecla-it.atlassian.net/browse/*
@@ -60,57 +60,3 @@ myFunctions.updateGUI = lutechJiraRappo;
 });
 
 })();
-
-
-
-
-/**
-
-1) al move scegliere PROJECT di default
-
-
-(function() {
-    'use strict';
-    console.log("Fix new project input size")
-    $("#project-single-select").css("width", "150%")
-
-    let current_project = $(".currentProject").text();
-
-    if( current_project == "Elesa B2B Service Desk Application Maintenance"){
-        console.log("set ELESAB2B as default");
-
-    }
-    else("no")
-})();
-
-
-
-2) script di samo nel titolo
-
- globals jQuery, $, waitForKeyElements
-
-this.$ = this.jQuery = jQuery.noConflict(true);let div= $('[data-test-id="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]');
-    let i = 0;
-
-    while((div.length === 0) && (i< 10)){
-        console.log("Trovati: "+div.length+" i'll sleep i=" +i);
-        sleep(100000)
-        div= $('[data-test-id="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]');
-        i++;
-    }
-
-    console.log("Trovati: "+div.length+" oppure passati "+i+" secondi");
-
-    
-
-       let lutechJiraRappo=function(){let h=jQuery('#jira-issue-header'),b=h.find('a'),bL=jQuery(b[b.length-1]).text(),b2=jQuery(b[b.length-2]).text(),rappo=(b2 && !isNaN(b2[b2.length-1]) ? (b2+' '): '')+bL+' | '+jQuery('h1:first').text(),msg=function(text){h.prepend(jQuery('<div/>',{'id':'lutechJira_tempMessage'}).css({'display':'none','margin-bottom':'50px','background':'#d7dfeb','border-radius':'16px','padding':'5px 10px','color':'#d22020','font-size':'16px','text-align':'center'}).html(text));jQuery('#lutechJira_tempMessage').show('slow');setTimeout(function(){jQuery('#lutechJira_tempMessage').hide('slow',function(){jQuery('#lutechJira_tempMessage').remove();});},2000);};window.focus();navigator.clipboard.writeText(rappo);msg('Clipboard filled with RAPPO description: <div style="font-weight:bold">'+rappo+'</div>');}
-
-
-    var myFunctions = window.myFunctions = {};
-myFunctions.updateGUI = lutechJiraRappo;
-   // myFunctions.updateGUI();
-
-**/
-
-
-
