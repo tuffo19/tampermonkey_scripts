@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Jira Compact Tracker Button (Icon + Text)
+// @name         Improvements Jira
 // @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      1.2.1
-// @description  Add a compact "Copy ticket info" button with icon + text to Jira issues (styled to match Jira UI).
+// @version      2.0.0
+// @description  some improvements for Jira
 // @author       tuffo19
 // @match        https://tecla-it.atlassian.net/browse/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=atlassian.net
