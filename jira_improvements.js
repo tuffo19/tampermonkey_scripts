@@ -1,63 +1,129 @@
 // ==UserScript==
-// @name         Improvements Jira
+// @name         Jira Compact Tracker Button (Icon + Text)
 // @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      1.0.1
-// @description  some improvements for Jira
+// @version      1.2.1
+// @description  Add a compact "Copy ticket info" button with icon + text to Jira issues (styled to match Jira UI).
 // @author       tuffo19
 // @match        https://tecla-it.atlassian.net/browse/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=atlassian.net
 // @grant        none
-// @require  	https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js
-// @downloadURL  https://raw.githubusercontent.com/tuffo19/tampermonkey_scripts/main/jira_improvements.js
-// @updateURL    https://raw.githubusercontent.com/tuffo19/tampermonkey_scripts/main/jira_improvements.js
-// @run-at      document-end
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js
+// @run-at       document-end
 // ==/UserScript==
 
-/* globals jQuery, $, waitForKeyElements */
-
+/* globals jQuery, $ */
 this.$ = this.jQuery = jQuery.noConflict(true);
+
+// Carica Material Symbols
+(function loadMaterialSymbols() {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+})();
 
 function waitForElm(selector) {
     return new Promise(resolve => {
-        if (document.querySelector(selector)) {
-            return resolve(document.querySelector(selector));
-        }
-
-        const observer = new MutationObserver(mutations => {
-            if (document.querySelector(selector)) {
+        if (document.querySelector(selector)) return resolve(document.querySelector(selector));
+        const observer = new MutationObserver(() => {
+            const el = document.querySelector(selector);
+            if (el) {
                 observer.disconnect();
-                resolve(document.querySelector(selector));
+                resolve(el);
             }
         });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+        observer.observe(document.body, { childList: true, subtree: true });
     });
 }
 
- let lutechJiraRappo=function(){let h=jQuery('#jira-issue-header'),b=h.find('a'),bL=jQuery(b[b.length-1]).text(),b2=jQuery(b[b.length-2]).text(),rappo=(b2 && !isNaN(b2[b2.length-1]) ? (b2+' '): '')+bL+' | '+jQuery('h1:first').text(),msg=function(text){h.prepend(jQuery('<div/>',{'id':'lutechJira_tempMessage'}).css({'display':'none','margin-bottom':'50px','background':'#d7dfeb','border-radius':'16px','padding':'5px 10px','color':'#d22020','font-size':'16px','text-align':'center'}).html(text));jQuery('#lutechJira_tempMessage').show('slow');setTimeout(function(){jQuery('#lutechJira_tempMessage').hide('slow',function(){jQuery('#lutechJira_tempMessage').remove();});},2000);};window.focus();navigator.clipboard.writeText(rappo);msg('Clipboard filled with RAPPO description: <div style="font-weight:bold">'+rappo+'</div>');}
+function getDescription() {
+  const currentIssue = jQuery('[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]').text().trim();
+  const parentIssue = jQuery('[data-testid="issue.views.issue-base.foundation.breadcrumbs.parent-issue.item"]').text().trim();
+  const title = jQuery('h1:first').text().trim();
 
-  var myFunctions = window.myFunctions = {};
-myFunctions.updateGUI = lutechJiraRappo;
-   // myFunctions.updateGUI();
+  const issuePart = parentIssue ? `${parentIssue} ${currentIssue}` : currentIssue;
+  return `${issuePart} | ${title}`;
+}
 
-(function() {
+function showMessage(text) {
+    const msg = document.createElement('div');
+    msg.id = 'customJiraMsg';
+    msg.style = 'margin-top: 12px; background: #e3fcef; color: #006644; padding: 6px 10px; border-radius: 6px; text-align: center; font-size: 13px;';
+    msg.innerHTML = text;
+    document.querySelector('#jira-issue-header')?.prepend(msg);
+    setTimeout(() => msg.remove(), 2000);
+}
+
+function insertCompactButtonWithIcon() {
+    waitForElm('div[data-testid="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]').then(container => {
+        if (document.querySelector('#custom-track-button')) return;
+
+        const button = document.createElement('button');
+        button.id = 'custom-track-button';
+        button.title = 'Copy ticket info';
+        button.style.display = 'inline-flex';
+        button.style.alignItems = 'center';
+        button.style.gap = '4px';
+        button.style.fontSize = '12px';
+        button.style.fontWeight = 'normal';
+        button.style.background = 'transparent';
+        button.style.color = '#5e6c84';
+        button.style.border = '1px solid #dfe1e6';
+        button.style.borderRadius = '4px';
+        button.style.padding = '2px 6px';
+        button.style.cursor = 'pointer';
+        button.style.fontFamily = 'inherit';
+        button.setAttribute('type', 'button');
+
+
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-outlined';
+        icon.textContent = 'text_snippet';
+        icon.style.fontSize = '16px';
+        icon.style.verticalAlign = 'middle';
+
+        const label = document.createElement('span');
+        label.textContent = 'Copy ticket info';
+
+        button.appendChild(icon);
+        button.appendChild(label);
+
+        button.onclick = () => {
+            const desc = getDescription();
+            const fullText = `${desc}`;
+
+            navigator.clipboard.writeText(fullText).then(() => {
+                showMessage(`📋 Ticket copied:<br><span style="color:#172b4d">${fullText}</span>`);
+            });
+        };
+
+        const wrapper = document.createElement('div');
+        wrapper.style.marginTop = '1px';
+        wrapper.appendChild(button);
+        container.appendChild(wrapper);
+    });
+}
+
+(function () {
     'use strict';
-   console.log("%c Improvements Jira enabled", 'font-size: 18px; font-weight: bold');
+    console.log('%c Jira Compact Tracker Button with Icon enabled', 'font-size: 14px; font-weight: bold;');
 
-    waitForElm('a[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]').then((elm) => {
-    console.log("%c Title is arrived. adding Button for comments", 'font-size: 12px;color: red');
-  // console.log(elm.textContent);
-   $('div[data-testid="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]').append("<div style='margin-left:12px'><button onclick='javascript:myFunctions.updateGUI(); return false'>Copy ticket info</button></div>");
-});
+    insertCompactButtonWithIcon();
 
-    waitForElm("button[data-testid='issue.activity.common.component.load-more-button.loading-button']").then((elm) => {
+    const observer = new MutationObserver(() => {
+        insertCompactButtonWithIcon();
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+})();
+
+
+/**
+rimosso temporaneamente il click su "show more" per aprire tutti i commenti
+   waitForElm("button[data-testid='issue.activity.common.component.load-more-button.loading-button']").then((elm) => {
      console.log("%c Button is arrived. Clicking on it to show more", 'font-size: 12px;color: red');
     //console.log(elm.textContent);
 
    $("button[data-testid='issue.activity.common.component.load-more-button.loading-button']").trigger("click")
 });
-
-})();
+*/
