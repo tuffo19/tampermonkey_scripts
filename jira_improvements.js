@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Improvements Jira
 // @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      2.0.0
+// @version      2.1.0
 // @description  some improvements for Jira
 // @author       tuffo19
 // @match        https://tecla-it.atlassian.net/browse/*
@@ -104,11 +104,34 @@ function insertCompactButtonWithIcon() {
     });
 }
 
+function expandAllComments() {
+    const tryClicking = () => {
+        const buttons = document.querySelectorAll('button[data-testid="issue.activity.common.component.load-more-button.loading-button"]');
+        if (buttons.length === 0) return false;
+
+        buttons.forEach(btn => btn.click());
+        return true;
+    };
+
+    // Prova più volte per gestire caricamenti progressivi
+    let attempts = 0;
+    const interval = setInterval(() => {
+        const clicked = tryClicking();
+        attempts++;
+
+        // Ferma dopo un certo numero di tentativi o se non ci sono più pulsanti
+        if (!clicked || attempts > 10) {
+            clearInterval(interval);
+        }
+    }, 1000); // Intervallo di 1 secondo tra i tentativi
+}
+
 (function () {
     'use strict';
-    console.log('%c Jira Compact Tracker Button with Icon enabled', 'font-size: 14px; font-weight: bold;');
+    console.log('%c Jira LutechRappo Button with Icon enabled', 'font-size: 14px; font-weight: bold;');
 
-    insertCompactButtonWithIcon();
+    insertCompactButtonWithIcon(); // aggiunge pulsante
+    expandAllComments(); //aperti commenti
 
     const observer = new MutationObserver(() => {
         insertCompactButtonWithIcon();
@@ -116,14 +139,3 @@ function insertCompactButtonWithIcon() {
 
     observer.observe(document.body, { childList: true, subtree: true });
 })();
-
-
-/**
-rimosso temporaneamente il click su "show more" per aprire tutti i commenti
-   waitForElm("button[data-testid='issue.activity.common.component.load-more-button.loading-button']").then((elm) => {
-     console.log("%c Button is arrived. Clicking on it to show more", 'font-size: 12px;color: red');
-    //console.log(elm.textContent);
-
-   $("button[data-testid='issue.activity.common.component.load-more-button.loading-button']").trigger("click")
-});
-*/
