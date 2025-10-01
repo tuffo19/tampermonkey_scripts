@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Improvements Jira
 // @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      2.1.0
+// @version      3.0.0
 // @description  some improvements for Jira
 // @author       tuffo19
 // @match        https://tecla-it.atlassian.net/browse/*
@@ -54,12 +54,12 @@ function showMessage(text) {
     setTimeout(() => msg.remove(), 2000);
 }
 
-function insertCompactButtonWithIcon() {
+function copyTicketButton() {
     waitForElm('div[data-testid="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]').then(container => {
-        if (document.querySelector('#custom-track-button')) return;
+        if (document.querySelector('#copy-ticket-button')) return;
 
         const button = document.createElement('button');
-        button.id = 'custom-track-button';
+        button.id = 'copy-ticket-button';
         button.title = 'Copy ticket info';
         button.style.display = 'inline-flex';
         button.style.alignItems = 'center';
@@ -101,6 +101,32 @@ function insertCompactButtonWithIcon() {
         wrapper.style.marginTop = '1px';
         wrapper.appendChild(button);
         container.appendChild(wrapper);
+        console.log("✅ Copy ticket bar creata in persistent header");
+    });
+}
+
+function moveStatusButtonBar() {
+    waitForElm('div[data-testid="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]').then(container1 => {
+        if (document.querySelector('#statusBarHeader')) return;
+
+        const statusBtn = document.getElementById('issue.fields.status-view.status-button'); // bottone dentro div status
+        //const statusDiv = statusBtn?.parentElement?.parentElement?.parentElement?.parentElement?.parentElement?.parentElement?.parentElement?.parentElement?.parentElement?.parentElement ;
+        const statusDiv = statusBtn?.closest('div[class^="css-"]');
+
+        const wrapper1 = document.createElement('div');
+        wrapper1.style.marginLeft = '40px';
+        wrapper1.id = 'statusBarHeader';
+
+        container1.appendChild(wrapper1);
+
+        if (statusDiv) {
+            if (statusDiv.parentNode !== wrapper1) {
+                // sposta il div subito dopo il bottone
+                wrapper1.appendChild(statusDiv);
+
+                console.log("✅ Status bar spostata in persistent header");
+            }
+        }
     });
 }
 
@@ -130,11 +156,13 @@ function expandAllComments() {
     'use strict';
     console.log('%c Jira LutechRappo Button with Icon enabled', 'font-size: 14px; font-weight: bold;');
 
-    insertCompactButtonWithIcon(); // aggiunge pulsante
+    copyTicketButton(); // aggiunge pulsante
+    moveStatusButtonBar();
     expandAllComments(); //aperti commenti
 
     const observer = new MutationObserver(() => {
-        insertCompactButtonWithIcon();
+        copyTicketButton();
+        moveStatusButtonBar();
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
