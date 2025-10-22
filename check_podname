@@ -2,10 +2,10 @@
 // @name         Show ts-app
 // @namespace    http://tampermonkey.net/
 // @version      0.4
-// @description  Mostra il valore di "server-hostname" negli header quando visiti elesa.com
+// @description  Mostra il valore di "server-hostname" negli header quando visiti servername.com
 // @author       tuffo19
-// @match        *://*.elesa.com/*
-// @match        *://elesa.com/*
+// @match        *://*.servename.com/*
+// @match        *://servername.com/*
 // @grant        GM_xmlhttpRequest
 // @connect      *
 // @run-at       document-idle
@@ -63,10 +63,10 @@
     if (!fullName) return null;
 
     const map = [
-      { regex: /^elesaprodauthts-/, label: '<PROD Auth>' },
-      { regex: /^elesaprodlivets-/, label: '<PROD Live>' },
-      { regex: /^elesauatauthts-/, label: '<UAT Auth>' },
-      { regex: /^elesauatlivets-/, label: '<UAT Live>' },
+      { regex: /^servernameprodauthts-/, label: '<PROD Auth>' },
+      { regex: /^servernameprodlivets-/, label: '<PROD Live>' },
+      { regex: /^servernameuatauthts-/, label: '<UAT Auth>' },
+      { regex: /^servernameuatlivets-/, label: '<UAT Live>' },
     ];
 
     for (const m of map) {
