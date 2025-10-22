@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Show ts-app
-// @namespace    http://tampermonkey.net/
-// @version      0.4
+// @namespace    https://github.com/tuffo19/tampermonkey_scripts/
+// @version      0.5
 // @description  Mostra il valore di "server-hostname" negli header quando visiti servername.com
 // @author       tuffo19
 // @match        *://*.servename.com/*
