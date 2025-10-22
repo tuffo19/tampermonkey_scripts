@@ -1,0 +1,142 @@
+// ==UserScript==
+// @name         Show ts-app
+// @namespace    http://tampermonkey.net/
+// @version      0.4
+// @description  Mostra il valore di "server-hostname" negli header quando visiti elesa.com
+// @author       tuffo19
+// @match        *://*.elesa.com/*
+// @match        *://elesa.com/*
+// @grant        GM_xmlhttpRequest
+// @connect      *
+// @run-at       document-idle
+// ==/UserScript==
+
+(function() {
+  'use strict';
+
+  const HEADER_NAME = 'server-hostname';
+  const BADGE_ID = 'tm-server-hostname-badge';
+
+  function showBadge(text) {
+    let el = document.getElementById(BADGE_ID);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = BADGE_ID;
+      Object.assign(el.style, {
+        position: 'fixed',
+        top: '10px',
+        right: '10px',
+        zIndex: 2147483647,
+        background: 'rgba(0,0,0,0.75)',
+        color: 'white',
+        padding: '6px 10px',
+        fontSize: '12px',
+        fontFamily: 'Segoe UI, Roboto, Arial, sans-serif',
+        borderRadius: '6px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        cursor: 'default',
+        maxWidth: '40vw',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      });
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+  }
+
+  function findHeaderInString(hdrsStr, name) {
+    if (!hdrsStr) return null;
+    const lines = hdrsStr.split(/\r?\n/);
+    const lower = name.toLowerCase();
+    for (const l of lines) {
+      const idx = l.indexOf(':');
+      if (idx > 0) {
+        const n = l.slice(0, idx).trim().toLowerCase();
+        if (n === lower) return l.slice(idx+1).trim();
+      }
+    }
+    return null;
+  }
+
+   function makeShortName(fullName) {
+    if (!fullName) return null;
+
+    const map = [
+      { regex: /^elesaprodauthts-/, label: '<PROD Auth>' },
+      { regex: /^elesaprodlivets-/, label: '<PROD Live>' },
+      { regex: /^elesauatauthts-/, label: '<UAT Auth>' },
+      { regex: /^elesauatlivets-/, label: '<UAT Live>' },
+    ];
+
+    for (const m of map) {
+      if (m.regex.test(fullName)) {
+        const suffix = fullName.replace(m.regex, '');
+        return `${m.label} ${suffix}`;
+      }
+    }
+
+    // fallback generico
+    return fullName;
+  }
+
+  function processValue(value) {
+    const short = makeShortName(value);
+    if (short) {
+      showBadge(`pod: ${short}`);
+    } else {
+      showBadge('pod: header non presente');
+    }
+  }
+
+  function gmRequest() {
+    GM_xmlhttpRequest({
+      method: 'HEAD',
+      url: window.location.href,
+      nocache: true,
+      onload: function(res) {
+        let value = findHeaderInString(res.responseHeaders, HEADER_NAME);
+        if (value) return processValue(value);
+
+        // se HEAD non restituisce header, prova GET
+        GM_xmlhttpRequest({
+          method: 'GET',
+          url: window.location.href,
+          nocache: true,
+          onload: function(res2) {
+            value = findHeaderInString(res2.responseHeaders, HEADER_NAME);
+            processValue(value);
+          },
+          onerror: function() {
+            showBadge('pod: errore GM GET');
+          }
+        });
+      },
+      onerror: function() {
+        showBadge('pod: errore GM HEAD');
+      }
+    });
+  }
+
+  function fetchFallback() {
+    fetch(window.location.href, { method: 'HEAD', credentials: 'same-origin', cache: 'no-store' })
+      .then(res => {
+        const val = res.headers.get(HEADER_NAME) || res.headers.get(HEADER_NAME.toLowerCase());
+        if (val) return processValue(val);
+        return fetch(window.location.href, { method: 'GET', credentials: 'same-origin', cache: 'no-store' })
+          .then(res2 => {
+            const val2 = res2.headers.get(HEADER_NAME) || res2.headers.get(HEADER_NAME.toLowerCase());
+            processValue(val2);
+          });
+      })
+      .catch(err => showBadge('pod: errore fetch ' + err.message));
+  }
+
+  if (typeof GM_xmlhttpRequest === 'function') {
+    gmRequest();
+  } else {
+    //fetchFallback();
+      console.log ("cannot gmRequest");
+  }
+
+})();
