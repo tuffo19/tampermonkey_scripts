@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Show ts-app
 // @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      0.5
+// @version      0.4
 // @description  Mostra il valore di "server-hostname" negli header quando visiti servername.com
 // @author       tuffo19
-// @match        *://*.servename.com/*
+// @match        *://*.servername.com/*
 // @match        *://servername.com/*
 // @grant        GM_xmlhttpRequest
 // @connect      *
@@ -63,10 +63,10 @@
     if (!fullName) return null;
 
     const map = [
-      { regex: /^servernameprodauthts-/, label: '<PROD Auth>' },
-      { regex: /^servernameprodlivets-/, label: '<PROD Live>' },
-      { regex: /^servernameuatauthts-/, label: '<UAT Auth>' },
-      { regex: /^servernameuatlivets-/, label: '<UAT Live>' },
+      { regex: /^servernameprodauth/, label: '<PROD Auth>' },
+      { regex: /^servernameprodlive/, label: '<PROD Live>' },
+      { regex: /^servernameuatauth/, label: '<UAT Auth>' },
+      { regex: /^servernameuatlive/, label: '<UAT Live>' },
     ];
 
     for (const m of map) {
