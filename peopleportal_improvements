@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Aggiungi scrollbar colorate
-// @namespace    https://github.com/tuffo19/tampermonkey_scripts/
-// @version      2024-03-19
+// @name         Aggiungi scrollbar colorate e keepalive
+// @namespace    http://tampermonkey.net/
+// @version      2025-11-10
 // @description  try to take over the world!
-// @author       You
+// @author       GTufano
 // @match        http*://people.lutech.it/ZTimesheet/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=lutech.it
 // @run-at   document-end
@@ -15,9 +15,68 @@
 (function() {
     'use strict';
 
+    // evita più istanze parallele
+  if (window.__KEEPALIVE_RUNNING__) {
+    console.log('Keepalive già attivo, esco');
+    return;
+  }
+  window.__KEEPALIVE_RUNNING__ = true;
+
+    // intervallo in ms: 25 minuti -> 25 * 60 * 1000
+  const INTERVAL = 25 * 60 * 1000;
+
+    // URL da chiamare per tenere viva la sessione; usa un endpoint autenticato
+  const KEEPALIVE_URL = location.href; // <<-- cambialo se serve
+
+     function now(mode = 'full') {
+  const d = new Date();
+  const opts = mode === 'time'
+    ? { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
+    : { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+
+  return d.toLocaleString('it-IT', opts);
+}
+
+    function showToast(text) {
+  const t = $('<div>').text(text)
+    .css({
+      position: 'fixed', bottom: '10px', right: '10px',
+      background: '#222', color: '#fff', padding: '6px 10px',
+      borderRadius: '6px', fontSize: '12px', zIndex: 99999, opacity: 0.8
+    })
+    .appendTo('body');
+  //setTimeout(() => t.fadeOut(500, () => t.remove()), 2000);
+}
+
+    let pingInProgress = false;
+
+     function ping() {
+    if (pingInProgress) {
+      console.warn(`[${now('time')}] Ping saltato: precedente ancora in corso`);
+      return;
+    }
+    pingInProgress = true;
+
+         fetch(KEEPALIVE_URL, { method: 'GET', credentials: 'include', cache: 'no-store' })
+      .then(r => {
+        console.log(`[${now('full')}] Keepalive ping -> status ${r.status}`);
+        showToast(`[${now('time')}] Ping OK`)
+      })
+      .catch(err => {
+        console.warn(`[${now('full')}] Keepalive fallito:`, err);
+      })
+      .finally(() => { pingInProgress = false; });
+  }
+
+
+
+
 
     var style = $('<style>div {scrollbar-color: hotpink blue; }</style>');
 $('html > head').append(style);
+
+    ping();
+    window.__KEEPALIVE_INTERVAL__ = setInterval(ping, INTERVAL);
 
 
 })();
