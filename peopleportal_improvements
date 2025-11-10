@@ -6,8 +6,8 @@
 // @author       GTufano
 // @match        http*://people.lutech.it/ZTimesheet/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=lutech.it
-// @run-at   document-end
-// @require  https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js
+// @run-at       document-end
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js
 // ==/UserScript==
 
 /* globals jQuery, $, waitForKeyElements */
@@ -15,68 +15,118 @@
 (function() {
     'use strict';
 
-    // evita più istanze parallele
-  if (window.__KEEPALIVE_RUNNING__) {
-    console.log('Keepalive già attivo, esco');
-    return;
-  }
-  window.__KEEPALIVE_RUNNING__ = true;
-
     // intervallo in ms: 25 minuti -> 25 * 60 * 1000
-  const INTERVAL = 25 * 60 * 1000;
-
+    const INTERVAL = 25 * 60 * 1000;
     // URL da chiamare per tenere viva la sessione; usa un endpoint autenticato
-  const KEEPALIVE_URL = location.href; // <<-- cambialo se serve
+    const KEEPALIVE_URL = location.href; // <<-- cambialo se serve
 
-     function now(mode = 'full') {
-  const d = new Date();
-  const opts = mode === 'time'
-    ? { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
-    : { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    // Se non sei nel top frame, esci (evita più istanze in iframe)
+    try {
+        if (window.top !== window) {
+            console.log('Keepalive: non sono nel top frame, esco');
+            return;
+        }
+    } catch (e) {
+        // se cross-origin non possiamo accedere a window.top: per sicurezza esci
+        console.warn('Keepalive: cross-origin || impossibile accedere a window.top, esco', e);
+        return;
+    }
 
-  return d.toLocaleString('it-IT', opts);
-}
+    // usa window.top per condividere lo stato (same-origin garantito dal match)
+    const root = window.top;
+
+    // evita più istanze parallele usando root
+    if (root.__KEEPALIVE_RUNNING__) {
+        console.log('Keepalive già attivo (root), esco');
+        return;
+    }
+    root.__KEEPALIVE_RUNNING__ = true;
+
+    function now(mode = 'full') {
+        const d = new Date();
+        const opts = mode === 'time' ?
+            {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            } :
+            {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+
+        return d.toLocaleString('it-IT', opts);
+    }
 
     function showToast(text) {
-  const t = $('<div>').text(text)
-    .css({
-      position: 'fixed', bottom: '10px', right: '10px',
-      background: '#222', color: '#fff', padding: '6px 10px',
-      borderRadius: '6px', fontSize: '12px', zIndex: 99999, opacity: 0.8
-    })
-    .appendTo('body');
-  //setTimeout(() => t.fadeOut(500, () => t.remove()), 2000);
-}
+        $('#toastDivRoot').remove();
+        const t = $('<div id="toastDivRoot">').text(text)
+            .css({
+                position: 'fixed',
+                bottom: '10px',
+                right: '10px',
+                background: '#222',
+                color: '#fff',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                zIndex: 99999,
+                opacity: 0.8
+            })
+            .appendTo('body');
+        //setTimeout(() => t.fadeOut(500, () => t.remove()), 2000);
+    }
 
     let pingInProgress = false;
 
-     function ping() {
-    if (pingInProgress) {
-      console.warn(`[${now('time')}] Ping saltato: precedente ancora in corso`);
-      return;
+    async function ping() {
+        if (pingInProgress) {
+            console.warn(`[${now('time')}] Ping saltato: precedente ancora in corso`);
+            return;
+        }
+        pingInProgress = true;
+
+        try {
+            const r = await fetch(KEEPALIVE_URL, {
+                method: 'GET',
+                credentials: 'include',
+                cache: 'no-store'
+            });
+            console.log(`[${now()}] Keepalive ping -> status ${r.status}`);
+            showToast(`[${now('time')}] Ping OK`);
+        } catch (err) {
+            console.warn(`[${now()}] Keepalive fallito:`, err);
+            showToast(`[${now('time')}] Ping ERR`);
+        } finally {
+            pingInProgress = false;
+        }
     }
-    pingInProgress = true;
 
-         fetch(KEEPALIVE_URL, { method: 'GET', credentials: 'include', cache: 'no-store' })
-      .then(r => {
-        console.log(`[${now('full')}] Keepalive ping -> status ${r.status}`);
-        showToast(`[${now('time')}] Ping OK`)
-      })
-      .catch(err => {
-        console.warn(`[${now('full')}] Keepalive fallito:`, err);
-      })
-      .finally(() => { pingInProgress = false; });
-  }
+    const style = $('<style>div {scrollbar-color: hotpink blue; }</style>');
+    $('html > head').append(style);
 
+    // Se esiste già un interval salvato su root, cancellalo (pulizia)
+    if (root.__KEEPALIVE_INTERVAL__) {
+        try {
+            clearInterval(root.__KEEPALIVE_INTERVAL__);
+            console.log('Clear precedente __KEEPALIVE_INTERVAL__');
+        } catch (e) {
+            console.warn('Errore clearing previous interval', e);
+        }
+    }
 
-
-
-
-    var style = $('<style>div {scrollbar-color: hotpink blue; }</style>');
-$('html > head').append(style);
-
+    // avvia ping e salva l'id su root (così altre esecuzioni lo vedono)
     ping();
-    window.__KEEPALIVE_INTERVAL__ = setInterval(ping, INTERVAL);
+    root.__KEEPALIVE_INTERVAL__ = setInterval(ping, INTERVAL);
+
+    // opzionale: se vuoi un modo per disattivare dal console
+    // window.top.__KEEPALIVE_STOP__ = function() { clearInterval(window.top.__KEEPALIVE_INTERVAL__); window.top.__KEEPALIVE_RUNNING__ = false; };
 
 
 })();
