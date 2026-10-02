@@ -1,0 +1,45 @@
+// ==UserScript==
+// @name         Jenkins - ora assoluta nella build history
+// @namespace    tuffo.jenkins
+// @version      1.0
+// @description  Sostituisce il tempo relativo ("1 hr 3 min") con data/ora locale nelle tabelle build di Jenkins; il relativo resta nel tooltip
+// @match        http://34.77.137.110:8080/*
+// @run-at       document-idle
+// @grant        none
+// ==/UserScript==
+
+(function () {
+  'use strict';
+
+  // Le celle con il tempo hanno l'orario reale in un attributo data ISO UTC, es. data="2026-10-02T13:47:28Z"
+  const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+
+  const fmt = new Intl.DateTimeFormat('it-IT', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+
+  function convert(root) {
+    root.querySelectorAll('td[data]:not([data-abs-time])').forEach((td) => {
+      const iso = td.getAttribute('data');
+      if (!ISO_UTC.test(iso)) return;
+      const d = new Date(iso);
+      if (isNaN(d)) return;
+      const relative = td.innerText.trim();
+      td.title = relative ? relative + ' fa' : '';
+      td.textContent = fmt.format(d);
+      td.style.whiteSpace = 'nowrap';
+      td.setAttribute('data-abs-time', '1'); // evita di riconvertire
+    });
+  }
+
+  convert(document);
+
+  // La tabella viene popolata/aggiornata dinamicamente: riconverte le righe nuove
+  let pending = false;
+  new MutationObserver(() => {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(() => { pending = false; convert(document); });
+  }).observe(document.body, { childList: true, subtree: true });
+})();
